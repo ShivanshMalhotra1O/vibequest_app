@@ -15,6 +15,7 @@ class WordGuessingGameState extends State<WordGuessingGame> {
   late String wordToGuess;
   List<String> guessedLetters = [];
   int attemptsLeft = 6;
+  List<String> uniqueLetters = [];
 
   @override
   void initState() {
@@ -46,12 +47,12 @@ class WordGuessingGameState extends State<WordGuessingGame> {
               ),
               const SizedBox(height: 30),
 
-              // Jumbled Alphabet Keyboard
+              // Only display unique letters from the guessing word
               Wrap(
                 alignment: WrapAlignment.center,
                 spacing: 10.0,
                 runSpacing: 10.0,
-                children: _getJumbledAlphabets().map((letter) {
+                children: uniqueLetters.map((letter) {
                   return ElevatedButton(
                     onPressed: guessedLetters.contains(letter) || attemptsLeft == 0
                         ? null
@@ -116,13 +117,8 @@ class WordGuessingGameState extends State<WordGuessingGame> {
       wordToGuess = words[Random().nextInt(words.length)];
       guessedLetters.clear();
       attemptsLeft = 6;
+      uniqueLetters = wordToGuess.split("").toSet().toList();
+      uniqueLetters.shuffle(Random()); // Shuffle the letters for randomness
     });
-  }
-
-  // Function to generate a shuffled alphabet list
-  List<String> _getJumbledAlphabets() {
-    List<String> alphabets = List.generate(26, (index) => String.fromCharCode(65 + index)); // A-Z
-    alphabets.shuffle(Random()); // Shuffle letters randomly
-    return alphabets;
   }
 }
