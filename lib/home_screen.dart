@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:vibequest/games/tic_tac_toe/tic_tac_toe_game.dart';
-// import 'package:vibequest/games/hangman/hangman_game.dart';
 import 'package:vibequest/games/word_guess/word_guessing_game.dart';
 import 'package:vibequest/games/memory_game/memory_game.dart';
 import 'package:vibequest/games/snake_game/snake_game_screen.dart';
 import 'package:vibequest/games/pong_game/pong_game_screen.dart';
 import 'package:vibequest/games/sudoku/sudoku_screen.dart';
+import 'login_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +18,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _showScrollToTopButton = false;
+  final User? _user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
@@ -25,14 +27,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _scrollListener() {
-    if (_scrollController.offset > 300) {
-      if (!_showScrollToTopButton) {
-        setState(() => _showScrollToTopButton = true);
-      }
-    } else {
-      if (_showScrollToTopButton) {
-        setState(() => _showScrollToTopButton = false);
-      }
+    if (_scrollController.offset > 300 && !_showScrollToTopButton) {
+      setState(() => _showScrollToTopButton = true);
+    } else if (_scrollController.offset <= 300 && _showScrollToTopButton) {
+      setState(() => _showScrollToTopButton = false);
     }
   }
 
@@ -44,6 +42,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _logout() async {
+    await FirebaseAuth.instance.signOut();
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -52,21 +60,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final String username = _user?.displayName ?? 'User';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('VibeQuest', textAlign: TextAlign.center),
+        title: const Text('VibeQuest'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: "Logout",
+            onPressed: _logout,
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Column(
           children: [
             const SizedBox(height: 10),
-            const Center(
+            Center(
               child: Text(
-                'Welcome to VibeQuest!',
+                'Welcome, $username!',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
               ),
             ),
             const SizedBox(height: 20),
@@ -79,7 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   GameCard(image: 'assets/memory_game.png', title: 'Memory Game', game: MemoryGame()),
                   GameCard(image: 'assets/snake_game.png', title: 'Snake Game', game: SnakeGameScreen()),
                   GameCard(image: 'assets/pong.png', title: 'Pong', game: PongGameScreen()),
-                  // GameCard(image: 'assets/hangman.png', title: 'Hangman', game: HangmanGame()),
                   GameCard(image: 'assets/sudoku.png', title: 'Sudoku', game: SudokuScreen()),
                 ],
               ),
@@ -141,7 +157,9 @@ class GameCard extends StatelessWidget {
                       elevation: 3,
                     ),
                     onPressed: () => Navigator.push(
-                      context, MaterialPageRoute(builder: (context) => game)),
+                      context,
+                      MaterialPageRoute(builder: (context) => game),
+                    ),
                     child: const Text('Play'),
                   ),
                 ],

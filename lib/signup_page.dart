@@ -1,8 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'login_page.dart';
 
-class SignupPage extends StatelessWidget {
+class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
+
+  @override
+  State<SignupPage> createState() => _SignupPageState();
+}
+
+class _SignupPageState extends State<SignupPage> {
+  final _auth = FirebaseAuth.instance;
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  void _signupUser() async {
+    try {
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      // Update display name with full name
+      await userCredential.user?.updateDisplayName(_nameController.text.trim());
+      await userCredential.user?.reload(); // Optional: refresh the user object
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+      );
+    } catch (e) {
+      _showError(e.toString());
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +56,7 @@ class SignupPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             TextField(
+              controller: _nameController,
               decoration: InputDecoration(
                 labelText: "Full Name",
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -28,6 +64,7 @@ class SignupPage extends StatelessWidget {
             ),
             const SizedBox(height: 15),
             TextField(
+              controller: _emailController,
               decoration: InputDecoration(
                 labelText: "Email",
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -35,6 +72,7 @@ class SignupPage extends StatelessWidget {
             ),
             const SizedBox(height: 15),
             TextField(
+              controller: _passwordController,
               obscureText: true,
               decoration: InputDecoration(
                 labelText: "Password",
@@ -43,15 +81,7 @@ class SignupPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: () {
-                Navigator.pushReplacement(
-                  context, MaterialPageRoute(builder: (context) => const LoginPage()),
-                );
-              },
+              onPressed: _signupUser,
               child: const Text("Sign Up", style: TextStyle(fontSize: 18)),
             ),
             TextButton(
